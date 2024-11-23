@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="ar">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>مساعد تنظيم الوقت</title>
+  <style>
+    /* الأساسيات */
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #f4f4f9;
+      margin: 0;
+      padding: 0;
+      direction: rtl;
+    }
+
+    .container {
+      max-width: 800px;
+      margin: 50px auto;
+      padding: 20px;
+      background-color: #fff;
+      box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+    }
+
+    h1 {
+      text-align: center;
+      color: #333;
+    }
+
+    h2 {
+      color: #333;
+      margin-top: 20px;
+    }
+
+    .add-task {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 20px;
+    }
+
+    .add-task input,
+    .add-task select {
+      width: 30%;
+      padding: 10px;
+      border: 1px solid #ddd;
+      border-radius: 5px;
+      font-size: 16px;
+    }
+
+    .add-task button {
+      padding: 10px;
+      background-color: #4CAF50;
+      color: white;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+
+    .add-task button:hover {
+      background-color: #45a049;
+    }
+
+    #tasks {
+      list-style-type: none;
+      padding: 0;
+    }
+
+    #tasks li {
+      background-color: #f9f9f9;
+      margin: 10px 0;
+      padding: 10px;
+      border-radius: 5px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    #tasks li button,
+    #tasks li .edit-btn {
+      background-color: #ff5722;
+      color: white;
+      border: none;
+      padding: 5px 10px;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+
+    #tasks li button:hover,
+    #tasks li .edit-btn:hover {
+      background-color: #f44336;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>مساعد تنظيم الوقت والدورات التدريبية</h1>
+
+    <!-- إضافة المهمة -->
+    <div class="add-task">
+      <input type="text" id="taskInput" placeholder="أدخل المهمة هنا" />
+      
+      <!-- حدد أولوية المهمة -->
+      <select id="priorityInput">
+        <option value="low">منخفضة</option>
+        <option value="medium">متوسطة</option>
+        <option value="high">عالية</option>
+      </select>
+
+      <button id="addTaskBtn">إضافة المهمة</button>
+    </div>
+
+    <!-- عرض المهام -->
+    <div id="taskList">
+      <h2>مهام اليوم:</h2>
+      <ul id="tasks"></ul>
+    </div>
+  </div>
+
+  <script>
+    // جلب العناصر من HTML
+    const addTaskBtn = document.getElementById('addTaskBtn');
+    const taskInput = document.getElementById('taskInput');
+    const priorityInput = document.getElementById('priorityInput');
+    const taskList = document.getElementById('tasks');
+
+    // قائمة المهام
+    let tasks = JSON.parse(localStorage.getItem('tasks')) || [];
+
+    // دالة لإضافة المهمة
+    function addTask() {
+      const taskText = taskInput.value.trim();
+      const priority = priorityInput.value;
+
+      if (taskText !== '') {
+        const newTask = {
+          task: taskText,
+          priority: priority,
+          completed: false,
+        };
+
+        // إضافة المهمة إلى المصفوفة
+        tasks.push(newTask);
+
+        // حفظ المهام في المتصفح
+        localStorage.setItem('tasks', JSON.stringify(tasks));
+
+        // تحديث واجهة المستخدم
+        renderTasks();
+
+        // مسح الإدخال بعد إضافة المهمة
+        taskInput.value = '';
+      }
+    }
+
+    // دالة لعرض المهام في واجهة المستخدم
+    function renderTasks() {
+      taskList.innerHTML = ''; // مسح المهام القديمة
+
+      // ترتيب المهام حسب الأولوية
+      tasks.sort((a, b) => {
+        const priorityOrder = { high: 1, medium: 2, low: 3 };
+        return priorityOrder[a.priority] - priorityOrder[b.priority];
+      });
+
+      tasks.forEach((task, index) => {
+        const li = document.createElement('li');
+        li.innerHTML = `
+          <span class="task-text">${task.task} - <strong>${task.priority}</strong> </span>
+          <button onclick="deleteTask(${index})">حذف</button>
+          <button class="edit-btn" onclick="editTask(${index})">تعديل</button>
+        `;
+        taskList.appendChild(li);
+      });
+    }
+
+    // دالة لحذف المهمة
+    function deleteTask(index) {
+      tasks.splice(index, 1);
+      // حفظ المهام بعد التعديل
+      localStorage.setItem('tasks', JSON.stringify(tasks));
+      renderTasks();
+    }
+
+    // دالة لتعديل المهمة
+    function editTask(index) {
+      const taskToEdit = tasks[index];
+      taskInput.value = taskToEdit.task;
+      priorityInput.value = taskToEdit.priority;
+
+      // حذف المهمة القديمة
+      deleteTask(index);
+    }
+
+    // ربط حدث الزر مع الدالة لإضافة المهمة
+    addTaskBtn.addEventListener('click', addTask);
+
+    // جعل زر الإدخال يعمل عند الضغط على زر "Enter"
+    taskInput.addEventListener('keypress', function (e) {
+      if (e.key === 'Enter') {
+        addTask();
+      }
+    });
+
+    // عرض المهام عند تحميل الصفحة
+    window.onload = renderTasks;
+  </script>
+</body>
+</html>
